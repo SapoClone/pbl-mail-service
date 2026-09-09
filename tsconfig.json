@@ -26,6 +26,7 @@
       "@/common/*": ["src/common/*"],
       "@/config/*": ["src/config/*"],
       "@/constants/*": ["src/constants/*"],
+      "@/health/*": ["src/health/*"],
       "@/mail/*": ["src/mail/*"],
       "@/resend/*": ["src/resend/*"],
       "@/utils/*": ["src/utils/*"]
