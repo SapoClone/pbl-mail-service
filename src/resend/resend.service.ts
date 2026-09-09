@@ -20,7 +20,7 @@ export class ResendService {
     );
   }
 
-  async send(payload: ISendEmailPayload): Promise<void> {
+  async send(payload: ISendEmailPayload): Promise<string | null> {
     const fromEmail = this.configService.getOrThrow('resend.fromEmail', {
       infer: true,
     });
@@ -30,15 +30,24 @@ export class ResendService {
 
     this.logger.debug(`Sending email to ${payload.to}`);
 
-    const { error } = await this.client.emails.send({
+    const response = await this.client.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
     });
 
+    const { data, error } = response;
+
     if (error) {
       throw new Error(error.message);
     }
+
+    if (data?.id) {
+      this.logger.log(`Email sent successfully with ID: ${data.id}`);
+      return data.id;
+    }
+
+    return null;
   }
 }
