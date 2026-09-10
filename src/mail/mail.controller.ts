@@ -1,9 +1,11 @@
 import { SendVerificationEmailDto } from '@/common/dto/send-verification-email.dto';
+import { QstashSignatureGuard } from '@/qstash/qstash-signature.guard';
 import { ResendService } from '@/resend/resend.service';
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { MailService } from './mail.service';
 
 @Controller('tasks')
+@UseGuards(QstashSignatureGuard)
 export class MailController {
   constructor(
     private readonly mailService: MailService,

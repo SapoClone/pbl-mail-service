@@ -13,6 +13,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
     instrument: ObserveInstrument,
+    // QstashSignatureGuard needs the exact raw request body (not the
+    // parsed/re-serialized JSON) to verify Upstash's signature — Nest
+    // attaches it as req.rawBody when this is enabled.
+    rawBody: true,
   });
 
   const logger = app.get(Logger);

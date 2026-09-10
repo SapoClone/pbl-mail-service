@@ -18,6 +18,7 @@
     "^@/config(.*)$": "<rootDir>/config$1",
     "^@/constants(.*)$": "<rootDir>/constants$1",
     "^@/mail(.*)$": "<rootDir>/mail$1",
+    "^@/qstash(.*)$": "<rootDir>/qstash$1",
     "^@/resend(.*)$": "<rootDir>/resend$1",
     "^@/utils(.*)$": "<rootDir>/utils$1"
   },
