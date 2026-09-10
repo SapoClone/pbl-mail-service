@@ -1,6 +1,7 @@
 import appConfig from '@/config/app.config';
 import { HealthController } from '@/health/health.controller';
 import { MailModule } from '@/mail/mail.module';
+import qstashConfig from '@/qstash/config/qstash.config';
 import { ResendModule } from '@/resend/resend.module';
 import resendConfig from '@/resend/config/resend.config';
 import loggerFactory from '@/utils/logger-factory';
@@ -15,7 +16,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, resendConfig],
+      load: [appConfig, resendConfig, qstashConfig],
       envFilePath: ['.env'],
     }),
     LoggerModule.forRootAsync({

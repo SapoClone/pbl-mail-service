@@ -1,3 +1,4 @@
+import { QstashSignatureGuard } from '@/qstash/qstash-signature.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MailController } from './mail.controller';
 import { MailService } from './mail.service';
@@ -24,7 +25,15 @@ describe('MailController', () => {
         { provide: MailService, useValue: mailServiceValue },
         { provide: ResendService, useValue: resendServiceValue },
       ],
-    }).compile();
+    })
+      // Not under test here — QstashSignatureGuard has its own spec. This
+      // controller's method is called directly below (not through Nest's
+      // HTTP pipeline), so the real guard never actually runs regardless;
+      // overriding it just lets the module compile without needing
+      // ConfigService wired up for this unrelated test.
+      .overrideGuard(QstashSignatureGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<MailController>(MailController);
   });

@@ -28,6 +28,7 @@
       "@/constants/*": ["src/constants/*"],
       "@/health/*": ["src/health/*"],
       "@/mail/*": ["src/mail/*"],
+      "@/qstash/*": ["src/qstash/*"],
       "@/resend/*": ["src/resend/*"],
       "@/utils/*": ["src/utils/*"]
     }
