@@ -46,15 +46,16 @@ USER node
 ######################
 # BUILD FOR PRODUCTION
 ######################
+# AWS Lambda container image — deployed as a container-image-package Lambda
+# function, triggered directly by an SQS event source mapping (see
+# pbl-infra). The base image provides the Lambda Runtime Interface Client;
+# CMD names the handler as "<compiled file without .js>.<exported function>".
 
-FROM node:20-alpine AS production
-WORKDIR /app
+FROM public.ecr.aws/lambda/nodejs:20 AS production
 
-RUN mkdir -p dist/mail/templates
-COPY --chown=node:node --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node --from=builder /app/dist ./dist
-COPY --chown=node:node --from=builder /app/package.json ./
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/dist/mail/templates
+COPY --from=builder /app/node_modules ${LAMBDA_TASK_ROOT}/node_modules
+COPY --from=builder /app/dist ${LAMBDA_TASK_ROOT}/dist
+COPY --from=builder /app/package.json ${LAMBDA_TASK_ROOT}/package.json
 
-USER node
-
-CMD [ "node", "dist/main.js" ]
+CMD [ "dist/lambda.handler" ]
