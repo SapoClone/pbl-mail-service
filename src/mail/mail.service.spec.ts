@@ -13,7 +13,7 @@ describe('MailService', () => {
           provide: ConfigService,
           useValue: {
             get: (key: string) =>
-              key === 'app.url' ? 'http://localhost:3000' : undefined,
+              key === 'app.apiPublicUrl' ? 'http://localhost:3000' : undefined,
           },
         },
       ],

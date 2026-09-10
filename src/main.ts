@@ -15,7 +15,29 @@ async function bootstrap() {
     instrument: ObserveInstrument,
   });
 
-  app.useLogger(app.get(Logger));
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+
+  // Defense-in-depth: mirrors pbl-api's main.ts handler, added there for the
+  // @google-cloud/tasks floating-promise bug. pbl-mail-service depends on
+  // its own third-party API client (resend), so guard against an
+  // unhandled rejection taking down the whole process the same way.
+  process.on('unhandledRejection', (reason) => {
+    logger.error(reason, 'unhandledRejection');
+  });
+
+  // OBSERVE_APP_KEY/OBSERVE_APP_SECRET are read straight off process.env in
+  // app.module.ts's createObserveModule() call, bypassing the class-validator
+  // validateConfig pattern used elsewhere — so a missing/empty value fails
+  // silently (monitoring just stops working) instead of crashing the app.
+  // Warn loudly at boot so this doesn't go unnoticed.
+  if (!process.env.OBSERVE_APP_KEY || !process.env.OBSERVE_APP_SECRET) {
+    logger.warn(
+      'OBSERVE_APP_KEY and/or OBSERVE_APP_SECRET is unset — Observe monitoring is disabled/broken.',
+      'ObserveConfig',
+    );
+  }
+
   app.use(helmet());
   app.useGlobalPipes(
     new ValidationPipe({

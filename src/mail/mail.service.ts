@@ -18,7 +18,7 @@ export class MailService {
   constructor(private readonly configService: ConfigService<AllConfigType>) {}
 
   renderEmailVerification(email: string, token: string): ISendEmailPayload {
-    const url = `${this.configService.get('app.url', { infer: true })}/api/v1/auth/verify/email?token=${token}`;
+    const url = `${this.configService.get('app.apiPublicUrl', { infer: true })}/api/v1/auth/verify/email?token=${token}`;
 
     return {
       to: email,
