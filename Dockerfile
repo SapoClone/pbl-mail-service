@@ -2,7 +2,7 @@
 # BUILD BASE IMAGE
 ##################
 
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # Install and use the pnpm version pinned in package.json's "packageManager" field
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
@@ -51,7 +51,7 @@ USER node
 # pbl-infra). The base image provides the Lambda Runtime Interface Client;
 # CMD names the handler as "<compiled file without .js>.<exported function>".
 
-FROM public.ecr.aws/lambda/nodejs:20 AS production
+FROM public.ecr.aws/lambda/nodejs:24 AS production
 
 RUN mkdir -p ${LAMBDA_TASK_ROOT}/dist/mail/templates
 COPY --from=builder /app/node_modules ${LAMBDA_TASK_ROOT}/node_modules
