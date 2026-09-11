@@ -68,6 +68,12 @@ jobs:
           context: .
           target: production
           push: true
+          # Lambda's CreateFunction/UpdateFunctionCode rejects the OCI
+          # image index that buildx produces by default when provenance/SBOM
+          # attestations are attached — "image manifest ... media type ...
+          # not supported". Plain single-platform manifest only.
+          provenance: false
+          sbom: false
           tags: ${{ steps.image.outputs.image }}
           cache-from: type=registry,ref=${{ steps.ecr-login.outputs.registry }}/${{ vars.AWS_ECR_REPOSITORY }}:buildcache
           cache-to: type=registry,ref=${{ steps.ecr-login.outputs.registry }}/${{ vars.AWS_ECR_REPOSITORY }}:buildcache,mode=max
