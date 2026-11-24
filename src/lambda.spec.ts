@@ -6,6 +6,7 @@ import { SQSEvent } from "aws-lambda";
 import { handler } from "./lambda";
 
 const renderEmailVerificationMock = jest.fn();
+const renderPasswordResetMock = jest.fn();
 const sendMock = jest.fn();
 const loggerMock = { log: jest.fn(), error: jest.fn() };
 
@@ -20,7 +21,10 @@ jest.mock("@nestjs/core", () => ({
     createApplicationContext: jest.fn().mockResolvedValue({
       get: (token: unknown) => {
         if (token === MailService)
-          return { renderEmailVerification: renderEmailVerificationMock };
+          return {
+            renderEmailVerification: renderEmailVerificationMock,
+            renderPasswordReset: renderPasswordResetMock,
+          };
         if (token === ResendService) return { send: sendMock };
         if (token === Logger) return loggerMock;
         throw new Error(`unexpected token: ${String(token)}`);
@@ -40,6 +44,7 @@ describe("lambda handler", () => {
   beforeEach(() => {
     renderEmailVerificationMock.mockReset();
     sendMock.mockReset();
+    renderPasswordResetMock.mockReset();
     loggerMock.log.mockReset();
     loggerMock.error.mockReset();
 
@@ -47,6 +52,11 @@ describe("lambda handler", () => {
       to: "user@example.com",
       subject: "Email Verification",
       html: "<p>verify</p>",
+    });
+    renderPasswordResetMock.mockReturnValue({
+      to: "user@example.com",
+      subject: "Đặt lại mật khẩu",
+      html: "<p>reset</p>",
     });
     sendMock.mockResolvedValue("email_123");
   });
@@ -95,5 +105,51 @@ describe("lambda handler", () => {
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ batchItemFailures: [{ itemIdentifier: "2" }] });
+  });
+
+  it("renders a password-reset message with its own template and keeps the link out of the log", async () => {
+    const url = "http://localhost:5173/reset-password?token=abc";
+    const event: SQSEvent = {
+      Records: [
+        record("1", { type: "password-reset", email: "user@example.com", url }),
+      ],
+    };
+
+    const result = await handler(event, null, null);
+
+    expect(renderPasswordResetMock).toHaveBeenCalledWith(
+      "user@example.com",
+      url,
+    );
+    expect(renderEmailVerificationMock).not.toHaveBeenCalled();
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ batchItemFailures: [] });
+    expect(JSON.stringify(loggerMock.log.mock.calls)).not.toContain("token=");
+  });
+
+  it("fails a password-reset message with a bad email or url, others still go through", async () => {
+    const event: SQSEvent = {
+      Records: [
+        record("1", {
+          type: "password-reset",
+          email: "nope",
+          url: "http://a.test/x",
+        }),
+        record("2", {
+          type: "password-reset",
+          email: "user@example.com",
+          url: "javascript:alert(1)",
+        }),
+        record("3", { email: "user@example.com", token: "abc" }),
+      ],
+    };
+
+    const result = await handler(event, null, null);
+
+    expect(renderPasswordResetMock).not.toHaveBeenCalled();
+    expect(renderEmailVerificationMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      batchItemFailures: [{ itemIdentifier: "1" }, { itemIdentifier: "2" }],
+    });
   });
 });
