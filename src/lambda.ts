@@ -1,3 +1,4 @@
+import { SendPasswordResetEmailDto } from "@/common/dto/send-password-reset-email.dto";
 import { SendVerificationEmailDto } from "@/common/dto/send-verification-email.dto";
 import { MailService } from "@/mail/mail.service";
 import { ResendService } from "@/resend/resend.service";
@@ -33,10 +34,27 @@ async function processRecord(
   resendService: ResendService,
   logger: Logger,
 ): Promise<void> {
-  const dto = plainToInstance(
-    SendVerificationEmailDto,
-    JSON.parse(record.body),
-  );
+  const body = JSON.parse(record.body);
+
+  // The queue carries two kinds of message; one without `type` is an email
+  // verification (what pbl-api sent before `type` existed).
+  if (body?.type === "password-reset") {
+    const dto = plainToInstance(SendPasswordResetEmailDto, body);
+    const errors = validateSync(dto);
+    if (errors.length > 0) {
+      throw new Error(
+        `Invalid message body for record ${record.messageId}: ${errors.toString()}`,
+      );
+    }
+    await resendService.send(
+      mailService.renderPasswordReset(dto.email, dto.url),
+    );
+    // no address and no link in the log: the url holds the token
+    logger.log("Sent password reset email", "Lambda");
+    return;
+  }
+
+  const dto = plainToInstance(SendVerificationEmailDto, body);
   const errors = validateSync(dto);
   if (errors.length > 0) {
     throw new Error(
